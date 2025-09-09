@@ -2,7 +2,6 @@ package mate.academy.dao.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import mate.academy.dao.MovieSessionDao;
@@ -45,7 +44,7 @@ public class MovieSessionDaoImpl implements MovieSessionDao {
             Query<MovieSession> movieSessionQuery = session.createQuery("from MovieSession m "
                     + "where m.id = :id", MovieSession.class);
             movieSessionQuery.setParameter("id", id);
-            return Optional.ofNullable(movieSessionQuery.getSingleResult());
+            return movieSessionQuery.uniqueResultOptional();
         } catch (Exception e) {
             throw new DataProcessingException(
                     "Can't get MovieSession with id: " + id + " , error: ", e);
@@ -55,7 +54,7 @@ public class MovieSessionDaoImpl implements MovieSessionDao {
     @Override
     public List<MovieSession> findAvailableSessions(Long movieId, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+        LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Query<MovieSession> movieSessionQuery = session.createQuery("from MovieSession m "
@@ -66,7 +65,9 @@ public class MovieSessionDaoImpl implements MovieSessionDao {
             movieSessionQuery.setParameter("end", endOfDay);
             return movieSessionQuery.getResultList();
         } catch (Exception e) {
-            throw new DataProcessingException("Can't fetch data from DB. Error: ", e);
+            throw new DataProcessingException(
+                    "Can't find available MovieSession for movieId: "
+                            + movieId + " , and date: " + date, e);
         }
     }
 }
